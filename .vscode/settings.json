@@ -1,0 +1,34 @@
+{
+    "java.project.referencedLibraries": {
+        "include": [
+            "lib/**/*.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.base.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.controls.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.fxml.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.graphics.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.media.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.swing.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.web.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx-swt.jar",
+            "c:\\Users\\BiaDigi.com\\Desktop\\database-project\\lib\\mssql-jdbc-12.10.1.jre11.jar"
+        ],
+        "exclude": [
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx-swt.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-24.0.2\\lib\\javafx.base.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.base.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-24.0.2\\lib\\javafx.controls.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.controls.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.fxml.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.graphics.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-24.0.2\\lib\\javafx.graphics.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.media.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-24.0.2\\lib\\javafx.media.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-24.0.2\\lib\\javafx.swing.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.swing.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-21.0.8\\lib\\javafx.web.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-24.0.2\\lib\\javafx.web.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-24.0.2\\lib\\jdk.jsobject.jar",
+            "c:\\Program Files\\Java\\javafx-sdk-24.0.2\\lib\\jfx.incubator.input.jar"
+        ]
+    }
+}
