@@ -1,9 +1,14 @@
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 import javafx.event.ActionEvent;
 
 import java.sql.Connection;
@@ -16,6 +21,7 @@ import java.sql.Statement;
 public class mainSceneController {
 
     String connectionUrl = "jdbc:sqlserver://localhost:1433;databaseName=Food System Database;integratedSecurity=true;encrypt=true;trustServerCertificate=true;";
+    
 
     @FXML
     private TabPane TabPan_id;
@@ -57,39 +63,46 @@ public class mainSceneController {
     void loginBtnClicked(ActionEvent event) {
         String input_username = login_username_textField_id.getText();
         String input_password = login_password_textField_id.getText();
-    
-        try (Connection conn = DriverManager.getConnection(connectionUrl);
-             Statement stmt = conn.createStatement()) {
-    
-            String sql = "SELECT * FROM Person";
-            ResultSet rs = stmt.executeQuery(sql);
-    
-            boolean loginSuccessful = false;
-    
-            while (rs.next()) {
-                String username = rs.getString("UserName");
-                String password = rs.getString("Password");
-    
 
-                if (username.equals(input_username)) {
-                    if (password.equals(input_password)) {
-                        System.out.println("Login successful!");
-                        loginSuccessful = true;
-                        break;  
-                    } else {
-                        System.out.println("Incorrect password!");
-                    }
-                }
-            }
-    
-            if (!loginSuccessful) {
+        if (input_username.isEmpty() || input_password.isEmpty()) {
+            System.out.println("Username or password is empty!");
+            return;
+        }
+
+        try (Connection conn = DriverManager.getConnection(connectionUrl)) {
+
+            String sql = "SELECT * FROM Person WHERE UserName = ? AND Password = ?";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, input_username);
+            pstmt.setString(2, input_password);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                System.out.println("Login successful!");
+                String name = rs.getString("Name");
+                String username = rs.getString("UserName");
+
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("homeScene.fxml"));
+                Parent root = loader.load();
+
+                homeSceneController homeController = loader.getController();
+                homeController.setUserData(name, username);
+            
+                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.show();
+
+            } else {
                 System.out.println("Username not found or password incorrect.");
             }
-    
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     
 
     @FXML
@@ -140,6 +153,12 @@ public class mainSceneController {
                     pstmt.setString(6, alley);   
                     pstmt.setString(7, n_o);     
                     pstmt.setString(8, username); 
+                    pstmt.executeUpdate();
+
+                    sql = "INSERT INTO Customer (CustomerID , PersonID) VALUES (?, ?)";
+                    pstmt = conn.prepareStatement(sql);
+                    pstmt.setInt(1, numlastId);
+                    pstmt.setInt(2, numlastId);
 
                     pstmt.executeUpdate();
 
