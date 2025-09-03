@@ -3,7 +3,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -11,6 +13,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
@@ -75,6 +78,12 @@ public class homeSceneController {
     @FXML
     private Button menuBtn_id;
 
+    @FXML
+    private Button reservesBtn_id;
+
+    @FXML
+    private ChoiceBox<String> choiceeBox_id;
+
     private int totalItems = 0;
     private double totalPrice = 0.0;
 
@@ -84,23 +93,7 @@ public class homeSceneController {
         loadTabsFromDatabase();
         
     }
-    @FXML
-    void menuBtnOnClicked(ActionEvent event) {
-        if (tabPanParent_id.getChildren().size() > 1) {
-            tabPanParent_id.getChildren().remove(1, tabPanParent_id.getChildren().size() - 1);
-        }
-        
-        pageTite_id.setText("menue");
 
-        if (!tabPanParent_id.getChildren().contains(menuTapPane_id)) {
-            tabPanParent_id.getChildren().add(1, menuTapPane_id); 
-        }
-        if (!tabPanParent_id.getChildren().contains(bottomPane_id)) {
-            tabPanParent_id.getChildren().add(bottomPane_id); 
-        }
-    
-        loadTabsFromDatabase();
-    }
     private List<String> favoritesItems = new ArrayList<>();
     private TilePane favoritesContainer = new TilePane();
 
@@ -116,7 +109,7 @@ public class homeSceneController {
             favoritesContainer.setPrefColumns(5); 
             favoritesContainer.setStyle("-fx-padding: 15; -fx-alignment: CENTER_LEFT;");
 
-            String customerSql = "SELECT c.CustomerID FROM Customer c JOIN Person p ON c.PersonID = p.PersonID WHERE p.UserName = ?";
+            String customerSql = "SELECT CustomerID FROM Person p WHERE p.UserName = ?";
             PreparedStatement custStmt = conn.prepareStatement(customerSql);
             custStmt.setString(1, username_label_id.getText());
             ResultSet custRs = custStmt.executeQuery();
@@ -238,8 +231,7 @@ public class homeSceneController {
         favoritesButton.setOnAction(e -> {
             try (Connection conn = DriverManager.getConnection(connectionUrl)) {
 
-                // اول باید customerId رو پیدا کنیم
-                String customerSql = "SELECT c.CustomerID FROM Customer c JOIN Person p ON c.PersonID = p.PersonID WHERE p.UserName = ?";
+                String customerSql = "SELECT CustomerID FROM Person p WHERE p.UserName = ?";
                 PreparedStatement custStmt = conn.prepareStatement(customerSql);
                 custStmt.setString(1, username_label_id.getText());
                 ResultSet custRs = custStmt.executeQuery();
@@ -250,11 +242,9 @@ public class homeSceneController {
                 }
 
                 if (!favoritesItems.contains(name)) {
-                    // اضافه کردن به لیست و دیتابیس
                     favoritesItems.add(name);
                     favoritesButton.setText("Delete From Favorites");
 
-                    // پیدا کردن ItemID بر اساس نام
                     String itemSql = "SELECT i.ItemID FROM Item i JOIN MenuItem m ON i.MenuItemID = m.FoodID WHERE m.Name = ?";
                     PreparedStatement itemStmt = conn.prepareStatement(itemSql);
                     itemStmt.setString(1, name);
@@ -263,7 +253,6 @@ public class homeSceneController {
                     if (itemRs.next()) {
                         int itemId = itemRs.getInt("ItemID");
 
-                        // اضافه کردن به جدول Favorite
                         String insertFavSql = "INSERT INTO Favorite (CustomerID, ItemID) VALUES (?, ?)";
                         PreparedStatement insertStmt = conn.prepareStatement(insertFavSql);
                         insertStmt.setInt(1, customerId);
@@ -275,7 +264,6 @@ public class homeSceneController {
                     favoritesContainer.getChildren().add(favCard);
 
                 } else {
-                    // حذف از لیست و دیتابیس
                     favoritesItems.remove(name);
                     favoritesButton.setText("Add To Favorites");
 
@@ -285,7 +273,6 @@ public class homeSceneController {
                     deleteStmt.setString(2, name);
                     deleteStmt.executeUpdate();
 
-                    // حذف از UI
                     favoritesContainer.getChildren().removeIf(node -> {
                         if (node instanceof VBox vbox) {
                             if (vbox.getChildren().size() > 1) {
@@ -320,6 +307,7 @@ public class homeSceneController {
 
     @FXML
     public void initialize() {
+        choiceeBox_id.getItems().addAll("Onsite", "Offsite");
         discountCodeBtn_id.setOnAction(e -> applyDiscountCode());
         items_counter_label_id.setOnMouseClicked(e -> {
             if (selectedItems.isEmpty()) {
@@ -344,6 +332,8 @@ public class homeSceneController {
         });
     }
 
+    int discountCodeId = -1 ;
+
     @FXML
     private void applyDiscountCode() {
         String code = discountCode_textFild_id.getText().trim();
@@ -357,9 +347,9 @@ public class homeSceneController {
         }
 
         try (Connection conn = DriverManager.getConnection(connectionUrl)) {
-            String sql = "SELECT d.DiscountPerecentage, d.ExpirationDate " +
+            String sql = "SELECT d.DiscountPercentage, d.ExpirationDate " +
                         "FROM DiscountCode d " +
-                        "JOIN Person p ON d.CustomerID = p.PersonID " +
+                        "JOIN Person p ON d.CustomerID = p.CustomerID " +
                         "WHERE d.Code = ? AND p.UserName = ?";
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, code);
@@ -367,7 +357,8 @@ public class homeSceneController {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                double discountPercent = rs.getDouble("DiscountPerecentage");
+                discountCodeId = rs.getInt("DiscountCodeID");
+                double discountPercent = rs.getDouble("DiscountPercentage");
                 java.sql.Date expirationDate = rs.getDate("ExpirationDate");
                 java.util.Date today = new java.util.Date();
 
@@ -409,16 +400,147 @@ public class homeSceneController {
         }
     }
 
+    @FXML
+    void payBtnOnClicked(ActionEvent event) {
+        if (selectedItems.isEmpty()) {
+            Alert alert = new Alert(AlertType.WARNING);
+            alert.setTitle("Payment");
+            alert.setHeaderText(null);
+            alert.setContentText("No items selected for order.");
+            alert.showAndWait();
+            return;
+        }
+
+        String status = (String) choiceeBox_id.getValue();
+        if (status == null || status.isEmpty()) {
+            Alert alert = new Alert(AlertType.WARNING);
+            alert.setTitle("Payment");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select order type (Onsite/Offsite).");
+            alert.showAndWait();
+            return;
+        }
+
+        try (Connection conn = DriverManager.getConnection(connectionUrl)) {
+            conn.setAutoCommit(false); 
+
+            // پیدا کردن CustomerID
+            String customerSql = "SELECT CustomerID FROM Person WHERE UserName = ?";
+            PreparedStatement custStmt = conn.prepareStatement(customerSql);
+            custStmt.setString(1, username_label_id.getText());
+            ResultSet custRs = custStmt.executeQuery();
+            int customerId = 0;
+            if (custRs.next()) {
+                customerId = custRs.getInt("CustomerID");
+            }
+
+            // ایجاد سفارش جدید
+            String insertBillSql = "INSERT INTO Bill(Price , CustomerID) "+ "OUTPUT INSERTED.BillID " + "VALUES (? , ?)";
+            PreparedStatement billStmt = conn.prepareStatement(insertBillSql);
+            billStmt.setDouble(1, totalPrice);
+            billStmt.setInt(2, customerId);
+
+            ResultSet billRs = billStmt.executeQuery();
+            int BillId = -1;
+            if (billRs.next()) {
+                BillId = billRs.getInt("BillID");
+            }
+
+            String insertOrderSql =
+                "INSERT INTO [Order] (ManagerID, DiscountCodeID, BillID, CustomerID, Date, Type, TotalPrice, Status) " +
+                "OUTPUT INSERTED.OrderID " +
+                "VALUES (NULL, ?, ?, ?, GETDATE(), ?, ?, ?)";
+            PreparedStatement orderStmt = conn.prepareStatement(insertOrderSql);
+            if (discountCodeId != -1) {
+                orderStmt.setInt(1, discountCodeId);
+            } else {
+                orderStmt.setNull(1, java.sql.Types.INTEGER);
+            }            
+            orderStmt.setInt(2, BillId);
+            orderStmt.setInt(3, customerId);
+            orderStmt.setString(4, "Normal"); 
+            orderStmt.setDouble(5, totalPrice);
+            orderStmt.setString(6, status); 
+
+            ResultSet orderRs = orderStmt.executeQuery();
+            int orderId = 0;
+            if (orderRs.next()) {
+                orderId = orderRs.getInt("OrderID");
+            }
+
+            Map<String, Integer> itemCountMap = new HashMap<>();
+            for (String itemStr : selectedItems) {
+                String itemName = itemStr.split("-")[0].trim(); // استخراج اسم
+                itemCountMap.put(itemName, itemCountMap.getOrDefault(itemName, 0) + 1);
+            }
+
+            // آیتم‌های انتخابی رو در جدول Include ثبت کن
+            for (Map.Entry<String, Integer> entry : itemCountMap.entrySet()) {
+                String itemName = entry.getKey();
+                int quantity = entry.getValue();
+            
+                String itemSql = "SELECT i.ItemID FROM Item i JOIN MenuItem m ON i.MenuItemID = m.FoodID WHERE m.Name = ?";
+                PreparedStatement itemStmt = conn.prepareStatement(itemSql);
+                itemStmt.setString(1, itemName);
+                ResultSet itemRs = itemStmt.executeQuery();
+            
+                if (itemRs.next()) {
+                    int itemId = itemRs.getInt("ItemID");
+            
+                    // اگر جدول Include ستون Quantity داره:
+                    String includeSql = "INSERT INTO Include (OrderID, ItemID, Quantity) VALUES (?, ?, ?)";
+                    PreparedStatement includeStmt = conn.prepareStatement(includeSql);
+                    includeStmt.setInt(1, orderId);
+                    includeStmt.setInt(2, itemId);
+                    includeStmt.setInt(3, quantity);
+                    includeStmt.executeUpdate();
+            
+                    // اگر جدول Include ستون Quantity نداره و فقط PK داره:
+                    // => باید یا طراحی DB رو تغییر بدی یا فقط یک بار Insert کنی (quantity رو نگه نداری).
+                }
+            }
+
+            conn.commit(); // پایان تراکنش
+
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Payment");
+            alert.setHeaderText(null);
+            alert.setContentText("Your order has been placed successfully!");
+            alert.showAndWait();
+
+            // ریست داده‌ها
+            selectedItems.clear();
+            totalItems = 0;
+            totalPrice = 0;
+            updateCounters();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Database Error");
+            alert.setHeaderText(null);
+            alert.setContentText("An error occurred while saving your order.");
+            alert.showAndWait();
+        }
+    }
 
     @FXML
     void editProfileBtnOnClicked(ActionEvent event) {
 
         try {
-            tabPanParent_id.getChildren().remove(menuTapPane_id);
-            tabPanParent_id.getChildren().remove(bottomPane_id);
-            pageTite_id.setText("edit profile");
-            Parent editProfileRoot = FXMLLoader.load(getClass().getResource("editProfileScene.fxml"));
-            tabPanParent_id.getChildren().add(editProfileRoot);
+            String name = name_label_id.getText();
+            String username = username_label_id.getText();
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("editProfileScene.fxml"));
+            Parent root = loader.load();
+
+            editProfileSceneController editProfileSceneController = loader.getController();
+            editProfileSceneController.setUserData(name, username);
+            
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
            
         } catch (Exception e) {
             e.printStackTrace();
@@ -426,6 +548,35 @@ public class homeSceneController {
             alert.setTitle("Error");
             alert.setHeaderText(null);
             alert.setContentText("Could not load Edit Profile page.");
+            alert.showAndWait();
+        }
+
+    }
+
+    @FXML
+    void reservesBtnOnClicked(ActionEvent event) {
+        
+        try {
+            String name = name_label_id.getText();
+            String username = username_label_id.getText();
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("reservesScene.fxml"));
+            Parent root = loader.load();
+
+            reservesSceneController reservesSceneController = loader.getController();
+            reservesSceneController.setUserData(name, username);
+            
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+           
+        } catch (Exception e) {
+            e.printStackTrace();
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(null);
+            alert.setContentText("Could not load reserves page.");
             alert.showAndWait();
         }
 

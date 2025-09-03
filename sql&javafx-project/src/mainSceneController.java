@@ -4,6 +4,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TabPane;
@@ -15,6 +17,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 
@@ -66,6 +69,11 @@ public class mainSceneController {
 
         if (input_username.isEmpty() || input_password.isEmpty()) {
             System.out.println("Username or password is empty!");
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(null);
+            alert.setContentText("Username or password is empty!");
+            alert.showAndWait();
             return;
         }
 
@@ -96,6 +104,12 @@ public class mainSceneController {
 
             } else {
                 System.out.println("Username not found or password incorrect.");
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText(null);
+                alert.setContentText("Username not found or password incorrect.");
+                alert.showAndWait();
+
             }
 
         } catch (Exception e) {
@@ -120,19 +134,9 @@ public class mainSceneController {
         if (name != null && email != null && password != null && city != null && alley != null && n_o != null) {
             try (Connection conn = DriverManager.getConnection(connectionUrl);
              Statement stmt = conn.createStatement()) {
-                String sql = "SELECT MAX(PersonID) as MaxPersonID FROM Person";
-                ResultSet rs = stmt.executeQuery(sql);
-
-                int numlastId = 0;
-                if (rs.next()) {  
-                    String lastId = rs.getString("MaxPersonID");
-                    if (lastId != null) {
-                        numlastId = Integer.parseInt(lastId);
-                    }
-                }
-                numlastId = numlastId + 1;
-
+                String sql;
                 sql = "SELECT UserName FROM Person" ;
+                ResultSet rs;
                 rs = stmt.executeQuery(sql);
                 if (rs.next()) {  
                     String temp = rs.getString("UserName");
@@ -142,32 +146,45 @@ public class mainSceneController {
                 }
 
                 if (!flag){
-                    sql = "INSERT INTO Person (PersonID, Name, Email, Password, City, Alley, N_o , UserName) VALUES (?, ?, ?, ?, ?, ?, ? , ?)";
-                    PreparedStatement pstmt = conn.prepareStatement(sql);
+                    // Step 1: Insert into Customer and get generated key
+                    String sqlCustomer = "INSERT INTO Customer DEFAULT VALUES;";
+                    PreparedStatement pstmtCustomer = conn.prepareStatement(sqlCustomer, Statement.RETURN_GENERATED_KEYS);
+                    pstmtCustomer.executeUpdate();
 
-                    pstmt.setInt(1, numlastId);
-                    pstmt.setString(2, name); 
-                    pstmt.setString(3, email); 
-                    pstmt.setString(4, password); 
-                    pstmt.setString(5, city);    
-                    pstmt.setString(6, alley);   
-                    pstmt.setString(7, n_o);     
-                    pstmt.setString(8, username); 
-                    pstmt.executeUpdate();
+                    ResultSet generatedKeys = pstmtCustomer.getGeneratedKeys();
+                    int custID = -1;
+                    if (generatedKeys.next()) {
+                        custID = generatedKeys.getInt(1);  
+                    } else {
+                        throw new SQLException("Creating customer failed, no ID obtained.");
+                    }
+                    pstmtCustomer.close();
 
-                    sql = "INSERT INTO Customer (CustomerID , PersonID) VALUES (?, ?)";
-                    pstmt = conn.prepareStatement(sql);
-                    pstmt.setInt(1, numlastId);
-                    pstmt.setInt(2, numlastId);
+                    // Step 2: Insert into Person using custID
+                    String sqlPerson = "INSERT INTO Person (Name, Email, Password, City, Alley, N_o, CustomerID, UserName) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    PreparedStatement pstmtPerson = conn.prepareStatement(sqlPerson);
 
-                    pstmt.executeUpdate();
+                    pstmtPerson.setString(1, name);
+                    pstmtPerson.setString(2, email);
+                    pstmtPerson.setString(3, password);
+                    pstmtPerson.setString(4, city);
+                    pstmtPerson.setString(5, alley);
+                    pstmtPerson.setString(6, n_o);
+                    pstmtPerson.setInt(7, custID);
+                    pstmtPerson.setString(8, username);
 
-                    TabPan_id.getSelectionModel().select(0);
+                    pstmtPerson.executeUpdate();
+                    pstmtPerson.close();
 
 
 
                 }else{
                     System.out.println("username has already exist");
+                    Alert alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText(null);
+                    alert.setContentText("username has already exist");
+                    alert.showAndWait();
 
                 }
                 

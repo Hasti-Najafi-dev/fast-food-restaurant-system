@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TabPane?>
@@ -43,9 +44,9 @@
                     </items>
                   </SplitPane>
                   <Button fx:id="editProfileBtn_id" mnemonicParsing="false" onAction="#editProfileBtnOnClicked" prefHeight="78.0" prefWidth="288.0" text="edit profile" />
-                  <Button fx:id="menuBtn_id" mnemonicParsing="false" onAction="#menuBtnOnClicked" prefHeight="83.0" prefWidth="287.0" text="menu" />
-                  <Button mnemonicParsing="false" prefHeight="82.0" prefWidth="288.0" text="notification" />
-                  <Button mnemonicParsing="false" prefHeight="90.0" prefWidth="288.0" text="reserves" />
+                  <Button fx:id="menuBtn_id" mnemonicParsing="false" prefHeight="83.0" prefWidth="287.0" text="menu" />
+                  <Button fx:id="editProfileBtn_id" mnemonicParsing="false" prefHeight="82.0" prefWidth="288.0" text="notification" />
+                  <Button fx:id="reservesBtn_id" mnemonicParsing="false" onAction="#reservesBtnOnClicked" prefHeight="90.0" prefWidth="288.0" text="reserves" />
                   <Button mnemonicParsing="false" prefHeight="93.0" prefWidth="288.0" text="orders" />
                   <Button fx:id="logoutBtn_id" mnemonicParsing="false" onAction="#logoutBtnOnCkicked" prefHeight="78.0" prefWidth="288.0" text="logout">
                      <opaqueInsets>
@@ -89,7 +90,8 @@
                               <Button fx:id="discountCodeBtn_id" mnemonicParsing="false" text="ok" />
                            </children>
                         </VBox>
-                        <Button fx:id="payBtn_id" mnemonicParsing="false" text="pay" />
+                        <ChoiceBox fx:id="choiceeBox_id" prefWidth="150.0" />
+                        <Button fx:id="payBtn_id" mnemonicParsing="false" onAction="#payBtnOnClicked" text="pay" />
                      </children>
                   </HBox>
                </children>
