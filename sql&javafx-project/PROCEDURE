@@ -1,0 +1,78 @@
+CREATE PROCEDURE GetDashboardCounts
+AS
+BEGIN
+    SELECT 
+        (SELECT COUNT(OrderID) FROM [Order]) AS OrdersCount,
+        (SELECT COUNT(ReservationID) FROM Reservation) AS ReservationsCount,
+        (SELECT COUNT(CustomerID) FROM Customer) AS CustomersCount;
+END
+GO
+..............................................................
+USE [Food System Database]
+GO
+
+CREATE PROCEDURE GetOrders
+    @Type NVARCHAR(50) = NULL,
+    @Status NVARCHAR(50) = NULL
+AS
+BEGIN
+    IF (@Type IS NULL OR @Type = 'All') AND (@Status IS NULL OR @Status = 'All')
+        SELECT OrderID, Type, Status, Date, TotalPrice 
+        FROM [Order] 
+        ORDER BY Type;
+    ELSE IF @Type IS NULL OR @Type = 'All'
+        SELECT OrderID, Type, Status, Date, TotalPrice 
+        FROM [Order] 
+        WHERE Status = @Status
+        ORDER BY Type;
+    ELSE IF @Status IS NULL OR @Status = 'All'
+        SELECT OrderID, Type, Status, Date, TotalPrice 
+        FROM [Order] 
+        WHERE Type = @Type
+        ORDER BY Type;
+    ELSE
+        SELECT OrderID, Type, Status, Date, TotalPrice 
+        FROM [Order] 
+        WHERE Type = @Type AND Status = @Status
+        ORDER BY Type;
+END
+GO
+..............................................................
+CREATE PROCEDURE UpdateOrderStatus
+    @OrderID INT,
+    @Status NVARCHAR(50)
+AS
+BEGIN
+    UPDATE [Order] 
+    SET Status = @Status 
+    WHERE OrderID = @OrderID;
+END
+GO
+..............................................................
+CREATE PROCEDURE UpdateReservationStatus
+    @ReservationID INT,
+    @Status NVARCHAR(50)
+AS
+BEGIN
+    UPDATE [Reservation] 
+    SET Status = @Status 
+    WHERE ReservationID = @ReservationID;
+END
+GO
+..............................................................
+CREATE PROCEDURE GetReservations
+    @Status NVARCHAR(50) = NULL
+AS
+BEGIN
+    IF @Status IS NULL OR @Status = 'All'
+        SELECT ReservationID, CustomerID, Time, Date, ManagerID, Status 
+        FROM [Reservation] 
+        ORDER BY Date, Time;
+    ELSE
+        SELECT ReservationID, CustomerID, Time, Date, ManagerID, Status 
+        FROM [Reservation] 
+        WHERE Status = @Status
+        ORDER BY Date, Time;
+END
+GO
+
